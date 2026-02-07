@@ -109,65 +109,51 @@ app.put("/update/:id",(req,res)=>{
 // EXPORT EXCEL
 app.get("/export", async (req,res)=>{
 
- const workbook=new ExcelJS.Workbook();
- const sheet=workbook.addWorksheet("Observations");
+ try{
 
- sheet.columns=[
-  {header:"Name",key:"name"},
-  {header:"Department",key:"department"},
-  {header:"Observation",key:"description"},
-  {header:"Fix",key:"fix"},
-  {header:"Status",key:"status"},
-  {header:"Date",key:"date"}
- ];
+  const workbook=new ExcelJS.Workbook();
+  const sheet=workbook.addWorksheet("Observations");
 
- db.all("SELECT * FROM observations",(err,rows)=>{
+  sheet.columns=[
+   {header:"Name",key:"name"},
+   {header:"Department",key:"department"},
+   {header:"Observation",key:"description"},
+   {header:"Fix",key:"fix"},
+   {header:"Status",key:"status"},
+   {header:"Date",key:"date"}
+  ];
 
-  rows.forEach(r=>sheet.addRow(r));
+  db.all("SELECT * FROM observations", async (err,rows)=>{
 
-  res.setHeader(
-   "Content-Type",
-   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-  );
+   if(err){
+    console.log(err);
+    return res.status(500).send("db error");
+   }
 
-  res.setHeader(
-   "Content-Disposition",
-   "attachment; filename=observations.xlsx"
-  );
+   rows.forEach(r=>sheet.addRow(r));
 
-  workbook.xlsx.write(res).then(()=>res.end());
- });
+   res.setHeader(
+    "Content-Type",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+   );
+
+   res.setHeader(
+    "Content-Disposition",
+    "attachment; filename=observations.xlsx"
+   );
+
+   await workbook.xlsx.write(res);
+   res.end();
+
+  });
+
+ }catch(e){
+  console.log(e);
+  res.status(500).send("export failed");
+ }
 
 });
 
-// WEEKLY OVERDUE EMAIL
-cron.schedule("0 8 * * 1",()=>{
-
- console.log("Checking overdue observations...");
-
- db.all(
-  "SELECT * FROM observations WHERE status!='Closed'",
-  (err,rows)=>{
-
-   let overdueList="";
-
-   rows.forEach(o=>{
-
-    const today=new Date();
-    const obsDate=new Date(o.date);
-    const diff=(today-obsDate)/(1000*60*60*24);
-
-    if(diff>7){
-     overdueList+=`
-Name: ${o.name}
-Department: ${o.department}
-Observation: ${o.description}
-Date: ${o.date}
-
-`;
-    }
-
-   });
 
    if(overdueList==="") return;
 
