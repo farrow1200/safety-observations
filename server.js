@@ -155,19 +155,7 @@ app.get("/export", async (req,res)=>{
 });
 
 
-   if(overdueList==="") return;
 
-   transporter.sendMail({
-    from:"n05669169@gmail.com",
-    to:"nicholas.farrow@sms-group.com",
-    subject:"Overdue Safety Observations",
-    text:overdueList
-   });
-
-  }
- );
-
-});
 
 app.listen(3000,()=>{
  console.log("Server running on http://localhost:3000");
