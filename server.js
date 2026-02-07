@@ -16,9 +16,9 @@ const db = new sqlite3.Database("./safety.db");
 const transporter = nodemailer.createTransport({
  service:"gmail",
  auth:{
-  user:"n05669169@gmail.com",
-  pass:"baaulaqkbkvzpvcu"
- }
+ user:process.env.EMAIL_USER,
+ pass:process.env.EMAIL_PASS
+}
 });
 
 // CREATE TABLE
