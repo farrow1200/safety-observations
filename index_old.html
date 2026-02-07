@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Safety Observations</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+background:#222;
+color:white;
+margin:0;
+}
+
+.header{
+background:#111;
+text-align:center;
+padding:15px;
+}
+
+.statusBar{
+display:flex;
+flex-direction:column;
+gap:10px;
+padding:15px;
+}
+
+.statusBox{
+padding:15px;
+border-radius:12px;
+font-size:20px;
+text-align:center;
+}
+
+.open{background:red;}
+.progress{background:gold;color:black;}
+.closed{background:green;}
+
+.card{
+background:#333;
+margin:10px;
+padding:15px;
+border-radius:15px;
+box-shadow:0 0 10px black;
+}
+
+.overdue{
+border-left:10px solid red;
+background:#550000;
+}
+
+button{
+padding:10px;
+margin:5px;
+border:none;
+border-radius:10px;
+font-weight:bold;
+cursor:pointer;
+}
+
+</style>
+</head>
+
+<body>
+
+<div style="width:100%;text-align:center;background:#111;padding:15px;">
+
+<img src="logo.jpg" style="width:95%;max-height:120px;object-fit:contain;">
+
+<h2 style="color:white;margin:5px;">Osceola AR</h2>
+
+</div>
+
+
+<div style="text-align:center;">
+<button onclick="showTab('main')">Observations</button>
+<button onclick="showTab('charts')">Charts</button>
+<button onclick="window.location='/export'">Export Excel</button>
+</div>
+
+<div class="statusBar">
+<div class="statusBox open" id="openCount">Open:0</div>
+<div class="statusBox progress" id="progCount">In Progress:0</div>
+<div class="statusBox closed" id="closedCount">Closed:0</div>
+</div>
+
+<div id="mainTab">
+
+<div style="padding:15px;display:flex;flex-direction:column;gap:10px;max-width:400px;">
+
+<input id="name" placeholder="Employee Name">
+
+<select id="dept">
+<option>Cold Mill 1</option>
+<option>Cold Mill 2</option>
+<option>RCM</option>
+<option>ESP</option>
+<option>CSP</option>
+<option>HVOF</option>
+</select>
+
+<select id="status">
+<option>Open</option>
+<option>In Progress</option>
+<option>Closed</option>
+</select>
+
+<textarea id="obs" placeholder="Observation"></textarea>
+
+<textarea id="fix" placeholder="Fix Action"></textarea>
+
+<button onclick="add()">Submit Observation</button>
+
+</div>
+
+
+<div id="chartsTab" style="display:none;text-align:center;">
+<h2>Monthly Chart</h2>
+<canvas id="statusChart"></canvas>
+</div>
+
+<div id="closeModal" style="display:none;position:fixed;top:20%;left:30%;width:40%;background:white;color:black;padding:20px;border-radius:12px;">
+<h2>Close Observation</h2>
+<textarea id="closeFix" placeholder="What fixed it?" style="width:100%;height:100px;"></textarea>
+<button onclick="submitClose()">Submit Close</button>
+<button onclick="document.getElementById('closeModal').style.display='none'">Cancel</button>
+</div>
+
+<script>
+
+let chart;
+let closingID=null;
+
+function showTab(tab){
+document.getElementById("mainTab").style.display="none";
+document.getElementById("chartsTab").style.display="none";
+if(tab==="main") document.getElementById("mainTab").style.display="block";
+if(tab==="charts") document.getElementById("chartsTab").style.display="block";
+}
+
+function isOverdue(o){
+if(o.status==="Closed") return false;
+let diff=(new Date()-new Date(o.date))/(1000*60*60*24);
+return diff>7;
+}
+
+async function add(){
+
+const name=document.getElementById("name").value;
+const dept=document.getElementById("dept").value;
+const status=document.getElementById("status").value;
+const obs=document.getElementById("obs").value;
+const fix=document.getElementById("fix").value;
+
+await fetch("/add",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({name,dept,status,obs,fix})
+
+});
+
+alert("Observation Submitted");
+load();
+}
+
+function openCloseModal(id){
+closingID=id;
+document.getElementById("closeModal").style.display="block";
+}
+
+async function submitClose(){
+
+const fix=document.getElementById("closeFix").value;
+if(!fix){alert("Enter fix");return;}
+
+await fetch("/update",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({id:closingID,status:"Closed",fix})
+});
+
+document.getElementById("closeModal").style.display="none";
+load();
+}
+
+async function load(){
+
+const res=await fetch("/data");
+const data=await res.json();
+
+let open=0,prog=0,closed=0;
+let html="";
+
+data.forEach(o=>{
+
+if(o.status==="Open")open++;
+if(o.status==="In Progress")prog++;
+if(o.status==="Closed")closed++;
+
+html+=`
+<div class="card ${isOverdue(o)?'overdue':''}">
+<b>${o.name}</b> - ${o.dept}<br>
+${o.obs}<br>
+Status:${o.status}<br>
+<button onclick="openCloseModal('${o.id}')">Close</button>
+</div>
+`;
+});
+
+document.getElementById("list").innerHTML=html;
+
+openCount.innerText="Open:"+open;
+progCount.innerText="In Progress:"+prog;
+closedCount.innerText="Closed:"+closed;
+
+const ctx=document.getElementById("statusChart");
+
+if(chart)chart.destroy();
+
+chart=new Chart(ctx,{
+type:'bar',
+data:{
+labels:["Open","In Progress","Closed"],
+datasets:[{data:[open,prog,closed]}]
+}
+});
+
+}
+
+load();
+
+</script>
+
+</body>
+</html>

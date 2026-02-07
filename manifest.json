@@ -1,0 +1,15 @@
+{
+"name":"SMS Safety Observations",
+"short_name":"Safety App",
+"start_url":"/",
+"display":"standalone",
+"background_color":"#ffffff",
+"theme_color":"#3498db",
+"icons":[
+{
+"src":"logo.jpg",
+"sizes":"192x192",
+"type":"image/jpeg"
+}
+]
+}
