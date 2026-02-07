@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: safety-observations
+    env: node
+    buildCommand: npm install --build-from-source
+    startCommand: node server.js
+
