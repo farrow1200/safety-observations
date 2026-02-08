@@ -3,6 +3,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const sqlite3 = require("sqlite3").verbose();
 const cron = require("node-cron");
+require("dotenv").config();
 const { Resend } = require("resend");
 console.log("RESEND KEY EXISTS:", !!process.env.RESEND_API_KEY);
 console.log("RESEND KEY CHECK:", process.env.RESEND_API_KEY);

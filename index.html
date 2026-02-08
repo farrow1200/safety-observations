@@ -24,10 +24,7 @@ padding:15px;
 border-bottom:3px solid #ccc;
 }
 
-.tabs{
-text-align:center;
-margin:10px;
-}
+.tabs{text-align:center;margin:10px;}
 
 button{
 padding:12px;
@@ -82,9 +79,12 @@ padding:15px;
 border-radius:12px;
 box-shadow:0 3px 10px rgba(0,0,0,0.15);
 border-left:8px solid #3498db;
+}
+
 .overdue{
 border-left:8px solid #e74c3c !important;
 background:#ffe6e6;
+}
 
 .scoreCard{
 background:white;
@@ -96,6 +96,10 @@ border-left:8px solid #2ecc71;
 font-weight:bold;
 }
 
+.invalid{
+border:2px solid red !important;
+background:#ffe6e6;
+}
 
 </style>
 </head>
@@ -143,7 +147,7 @@ End Date:
 
 <div class="form">
 
-<input id="name" placeholder="Employee Name">
+<input id="name" class="required" placeholder="Employee Name">
 
 <select id="dept">
 <option>Cold Mill 1</option>
@@ -160,10 +164,12 @@ End Date:
 <option>Closed</option>
 </select>
 
-<textarea id="obs" placeholder="Observation"></textarea>
-<textarea id="fix" placeholder="Fix Action"></textarea>
+<textarea id="obs" class="required" placeholder="Observation"></textarea>
+<textarea id="fix" class="required" placeholder="Fix Action"></textarea>
 
-<button class="btnBlue" onclick="add()">Submit Observation</button>
+<button id="submitBtn" class="btnBlue" onclick="add()" disabled>
+Submit Observation
+</button>
 
 </div>
 
@@ -193,6 +199,26 @@ End Date:
 let chart;
 let closingID=null;
 let deferredPrompt;
+function validateForm(){
+
+const requiredFields = document.querySelectorAll(".required");
+let valid = true;
+
+requiredFields.forEach(field=>{
+
+ if(!field.value.trim()){
+  field.classList.add("invalid");
+  valid=false;
+ }else{
+  field.classList.remove("invalid");
+ }
+
+});
+
+document.getElementById("submitBtn").disabled = !valid;
+
+}
+
 
 window.addEventListener("beforeinstallprompt",(e)=>{
 
@@ -227,55 +253,45 @@ if(tab==="closed") document.getElementById("closedTab").style.display="block";
 
 async function add(){
 
-const name = document.getElementById("name").value.trim();
-const dept = document.getElementById("dept").value;
-const status = document.getElementById("status").value;
-const obs = document.getElementById("obs").value.trim();
-const fix = document.getElementById("fix").value.trim();
+console.log("ADD CLICKED");
 
+validateForm();
 
-// ===== VALIDATION =====
-if(!name){
- alert("Employee name required");
+const name=document.getElementById("name").value.trim();
+const dept=document.getElementById("dept").value;
+const status=document.getElementById("status").value;
+const obs=document.getElementById("obs").value.trim();
+const fix=document.getElementById("fix").value.trim();
+
+if(!name || !obs){
+ alert("Please fill out all required fields");
+ console.log("BLOCKED BY VALIDATION");
  return;
 }
 
-if(!obs){
- alert("Observation description required");
- return;
-}
+console.log("SENDING TO SERVER");
 
-if(!status){
- alert("Status required");
- return;
-}
-
-
-// ===== SEND DATA =====
 await fetch("/add",{
- method:"POST",
- headers:{"Content-Type":"application/json"},
- body:JSON.stringify({
-  name:name,
-  department:dept,
-  description:obs,
-  fix:fix,
-  status:status
- })
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+name:name,
+department:dept,
+description:obs,
+fix:fix,
+status:status
+})
 });
 
+alert("Observation Submitted");
 
-// ===== CLEAR FORM =====
 document.getElementById("name").value="";
 document.getElementById("obs").value="";
 document.getElementById("fix").value="";
-document.getElementById("status").selectedIndex=0;
-document.getElementById("dept").selectedIndex=0;
 
-alert("Observation Submitted");
 load();
-
 }
+
 
 
 
@@ -444,11 +460,18 @@ function clearDates(){
 
 document.getElementById("startDate").value="";
 document.getElementById("endDate").value="";
+document.querySelectorAll(".required").forEach(field=>{
+ field.addEventListener("input",validateForm);
+});
 load();
 
 }
 
+document.querySelectorAll(".required").forEach(field=>{
+ field.addEventListener("input",validateForm);
+});
 
+validateForm();
 load();
 
 </script>
