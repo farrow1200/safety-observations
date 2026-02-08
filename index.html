@@ -227,34 +227,56 @@ if(tab==="closed") document.getElementById("closedTab").style.display="block";
 
 async function add(){
 
-const name=document.getElementById("name").value;
-const dept=document.getElementById("dept").value;
-const status=document.getElementById("status").value;
-const obs=document.getElementById("obs").value;
-const fix=document.getElementById("fix").value;
+const name = document.getElementById("name").value.trim();
+const dept = document.getElementById("dept").value;
+const status = document.getElementById("status").value;
+const obs = document.getElementById("obs").value.trim();
+const fix = document.getElementById("fix").value.trim();
 
+
+// ===== VALIDATION =====
+if(!name){
+ alert("Employee name required");
+ return;
+}
+
+if(!obs){
+ alert("Observation description required");
+ return;
+}
+
+if(!status){
+ alert("Status required");
+ return;
+}
+
+
+// ===== SEND DATA =====
 await fetch("/add",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-name:name,
-department:dept,
-description:obs,
-fix:fix,
-status:status
-})
+ method:"POST",
+ headers:{"Content-Type":"application/json"},
+ body:JSON.stringify({
+  name:name,
+  department:dept,
+  description:obs,
+  fix:fix,
+  status:status
+ })
 });
 
-alert("Observation Submitted");
+
+// ===== CLEAR FORM =====
 document.getElementById("name").value="";
 document.getElementById("obs").value="";
 document.getElementById("fix").value="";
 document.getElementById("status").selectedIndex=0;
 document.getElementById("dept").selectedIndex=0;
 
+alert("Observation Submitted");
 load();
 
 }
+
 
 
 
