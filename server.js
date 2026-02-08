@@ -58,7 +58,7 @@ try {
 
  const result = await resend.emails.send({
   from: "onboarding@resend.dev",
-  to: ["nicholas.farrow@sms-group.com"],
+  to: ["n05669169@gmail.com"],
   subject: "New Safety Observation",
   text: "test email"
  });
