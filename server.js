@@ -19,7 +19,6 @@ const db = new sqlite3.Database("./safety.db");
 
 // ================= EMAIL =================
 console.log("RESEND KEY CHECK:", process.env.RESEND_API_KEY);
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ================= DATABASE =================
 db.run(`
