@@ -54,22 +54,38 @@ app.post("/add", (req, res) => {
   async function (err) {
 
    if (err) return res.status(500).send("db error");
+// EMAIL NEW OBSERVATION
 try {
 
- const result = await resend.emails.send({
+ await resend.emails.send({
+
   from: "onboarding@resend.dev",
-  to: ["nicholas.farrow@sms-group.com"],
-  subject: "New Safety Observation",
-  text: "test email"
+
+  to: [
+   "n05669169@gmail.com"
+
+  ],
+
+  subject: "🚨 New Safety Observation Submitted",
+
+  text:
+   "Employee: " + obs.name +
+   "\nDepartment: " + obs.department +
+   "\nObservation: " + obs.description +
+   "\nFix: " + obs.fix +
+   "\nStatus: " + obs.status +
+   "\nDate: " + date
+
  });
 
- console.log("EMAIL SUCCESS:", result);
+ console.log("OBSERVATION EMAIL SENT");
 
-} catch (err) {
+} catch(err) {
 
  console.log("EMAIL ERROR:", err);
 
 }
+
 
 
    
@@ -104,7 +120,7 @@ app.put("/update/:id",(req,res)=>{
    try{
     await resend.emails.send({
      from:"onboarding@resend.dev",
-     to:["nicholas.farrow@sms-group.com"],
+     to:["n05669169@gmail.com"],
      subject:"Observation Closed",
      text:"Observation "+id+" was closed."
     });
@@ -183,7 +199,7 @@ cron.schedule("0 8 * * 1",()=>{
    try{
     await resend.emails.send({
      from:"onboarding@resend.dev",
-     to:["nicholas.farrow@sms-group.com"],
+     to:["n05669169@gmail.com"],
      subject:"Overdue Safety Observations",
      text:overdueList
     });
