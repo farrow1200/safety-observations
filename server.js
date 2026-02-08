@@ -54,21 +54,27 @@ app.post("/add", (req, res) => {
   async function (err) {
 
    if (err) return res.status(500).send("db error");
+try {
 
-   try{
-    await resend.emails.send({
-     from:"onboarding@resend.dev",
-     to:["nicholas.farrow@sms-group.com"],
-     subject:"New Safety Observation",
-     text:
-      "Employee: "+obs.name+
-      "\nDept: "+obs.department+
-      "\nObservation: "+obs.description+
-      "\nStatus: "+obs.status
-    });
-   }catch(e){
-    console.log("EMAIL ERROR:",e.message);
-   }
+ const result = await resend.emails.send({
+  from: "onboarding@resend.dev",
+  to: ["nicholas.farrow@sms-group.com"],
+  subject: "New Safety Observation",
+  text: "test email"
+ });
+
+ console.log("EMAIL SUCCESS:", result);
+
+} catch (err) {
+
+ console.log("EMAIL ERROR:", err);
+
+}
+
+
+   
+
+
 
    res.send("ok");
   }
