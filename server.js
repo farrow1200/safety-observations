@@ -4,6 +4,8 @@ const bodyParser = require("body-parser");
 const sqlite3 = require("sqlite3").verbose();
 const cron = require("node-cron");
 const { Resend } = require("resend");
+console.log("RESEND KEY EXISTS:", !!process.env.RESEND_API_KEY);
+
 
 const app = express();
 
