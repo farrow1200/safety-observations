@@ -2,7 +2,7 @@ const ExcelJS = require("exceljs");
 const express = require("express");
 const bodyParser = require("body-parser");
 const sqlite3 = require("sqlite3").verbose();
-const { Resend } = require("resend");
+const nodemailer = require("nodemailer");
 const cron = require("node-cron");
 
 const app = express();
@@ -12,8 +12,18 @@ app.use(express.static(__dirname));
 
 const db = new sqlite3.Database("./safety.db");
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 
+// ================= EMAIL =================
+const transporter = nodemailer.createTransport({
+ service: "gmail",
+ auth: {
+  user: process.env.EMAIL_USER,
+  pass: process.env.EMAIL_PASS
+ }
+});
+
+
+// ================= DATABASE =================
 db.run(`
 CREATE TABLE IF NOT EXISTS observations (
  id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -26,10 +36,12 @@ CREATE TABLE IF NOT EXISTS observations (
 )
 `);
 
-app.post("/add",(req,res)=>{
 
- const obs=req.body;
- const date=new Date().toISOString().split("T")[0];
+// ================= ADD OBS =================
+app.post("/add", (req, res) => {
+
+ const obs = req.body;
+ const date = new Date().toISOString().split("T")[0];
 
  db.run(
   `INSERT INTO observations
@@ -43,90 +55,94 @@ app.post("/add",(req,res)=>{
    obs.status,
    date
   ],
-  async(err)=>{
+  function (err) {
 
-   if(err){
-    console.log(err);
-    return res.status(500).send("error");
-   }
-
-   try{
-    await resend.emails.send({
-     from:"onboarding@resend.dev",
-     to:["nicholas.farrow@sms-group.com"],
-     subject:"New Safety Observation",
-     text:
-      "Employee: "+obs.name+
-      "\nDept: "+obs.department+
-      "\nObservation: "+obs.description+
-      "\nStatus: "+obs.status
-    });
-   }catch(e){
-    console.log("EMAIL ERROR",e);
-   }
-
-   res.send("ok");
-  }
- );
-
-});
-
-app.get("/data",(req,res)=>{
- db.all("SELECT * FROM observations",(err,rows)=>{
-  res.json(rows);
- });
-});
-
-app.put("/update/:id",(req,res)=>{
-
- const id=req.params.id;
-
- db.run(
-  `UPDATE observations SET status=?,fix=? WHERE id=?`,
-  [req.body.status,req.body.fix,id],
-  async()=>{
-
-   try{
-    await resend.emails.send({
-     from:"onboarding@resend.dev",
-     to:["nicholas.farrow@sms-group.com"],
-     subject:"Observation Closed",
-     text:"Observation "+id+" was closed."
-    });
-   }catch(e){
-    console.log("EMAIL ERROR",e);
-   }
-
-   res.send("updated");
-  }
- );
-
-});
-
-app.get("/export", async (req,res)=>{
-
- try{
-
-  const workbook=new ExcelJS.Workbook();
-  const sheet=workbook.addWorksheet("Observations");
-
-  sheet.columns=[
-   {header:"Name",key:"name"},
-   {header:"Department",key:"department"},
-   {header:"Observation",key:"description"},
-   {header:"Fix",key:"fix"},
-   {header:"Status",key:"status"},
-   {header:"Date",key:"date"}
-  ];
-
-  db.all("SELECT * FROM observations", async (err,rows)=>{
-
-   if(err){
+   if (err) {
     console.log(err);
     return res.status(500).send("db error");
    }
 
-   rows.forEach(r=>sheet.addRow(r));
+   // EMAIL NEW OBS
+   transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to: "nicholas.farrow@sms-group.com",
+    subject: "New Safety Observation",
+    text:
+     "Employee: " + obs.name +
+     "\nDept: " + obs.department +
+     "\nObservation: " + obs.description +
+     "\nStatus: " + obs.status
+   }, (err) => {
+    if (err) console.log("EMAIL ERROR:", err);
+   });
+
+   res.send("ok");
+  }
+ );
+});
+
+
+// ================= GET DATA =================
+app.get("/data", (req, res) => {
+ db.all("SELECT * FROM observations", (err, rows) => {
+  if (err) return res.status(500).send("db error");
+  res.json(rows);
+ });
+});
+
+
+// ================= UPDATE OBS =================
+app.put("/update/:id", (req, res) => {
+
+ const id = req.params.id;
+
+ db.run(
+  `UPDATE observations SET status=?,fix=? WHERE id=?`,
+  [req.body.status, req.body.fix, id],
+  (err) => {
+
+   if (err) return res.status(500).send("update error");
+
+   transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to: "nicholas.farrow@sms-group.com",
+    subject: "Observation Closed",
+    text: "Observation " + id + " was closed."
+   }, (err) => {
+    if (err) console.log("EMAIL ERROR:", err);
+   });
+
+   res.send("updated");
+  }
+ );
+});
+
+
+// ================= EXPORT EXCEL =================
+app.get("/export", async (req, res) => {
+
+ try {
+
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("Observations");
+
+  sheet.columns = [
+   { header: "Name", key: "name" },
+   { header: "Department", key: "department" },
+   { header: "Observation", key: "description" },
+   { header: "Fix", key: "fix" },
+   { header: "Status", key: "status" },
+   { header: "Date", key: "date" }
+  ];
+
+  db.all("SELECT * FROM observations", async (err, rows) => {
+
+   if (err) {
+    console.log(err);
+    return res.status(500).send("db error");
+   }
+
+   rows.forEach(r => sheet.addRow(r));
 
    res.setHeader(
     "Content-Type",
@@ -140,66 +156,65 @@ app.get("/export", async (req,res)=>{
 
    await workbook.xlsx.write(res);
    res.end();
-
   });
 
- }catch(e){
+ } catch (e) {
   console.log(e);
   res.status(500).send("export failed");
  }
 
 });
 
-cron.schedule("0 8 * * 1",()=>{
+
+// ================= WEEKLY OVERDUE EMAIL =================
+cron.schedule("0 8 * * 1", () => {
 
  console.log("Checking overdue observations...");
 
  db.all(
   "SELECT * FROM observations WHERE status!='Closed'",
-  async(err,rows)=>{
+  (err, rows) => {
 
-   if(err) return console.log(err);
+   if (err) return console.log(err);
 
-   let overdueList="";
+   let overdueList = "";
 
-   rows.forEach(o=>{
+   rows.forEach(o => {
 
-    const today=new Date();
-    const obsDate=new Date(o.date);
-    const diff=(today-obsDate)/(1000*60*60*24);
+    const today = new Date();
+    const obsDate = new Date(o.date);
+    const diff = (today - obsDate) / (1000 * 60 * 60 * 24);
 
-    if(diff>7){
+    if (diff > 7) {
 
-     overdueList+=`
-Name: ${o.name}
-Department: ${o.department}
-Observation: ${o.description}
-Date: ${o.date}
-
-`;
-
+     overdueList +=
+      "Name: " + o.name +
+      "\nDept: " + o.department +
+      "\nObservation: " + o.description +
+      "\nDate: " + o.date + "\n\n";
     }
-
    });
 
-   if(overdueList==="") return;
+   if (overdueList === "") return;
 
-   try{
-    await resend.emails.send({
-     from:"onboarding@resend.dev",
-     to:["nicholas.farrow@sms-group.com"],
-     subject:"Overdue Safety Observations",
-     text:overdueList
-    });
-   }catch(e){
-    console.log("EMAIL ERROR",e);
-   }
+   transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to: "nicholas.farrow@sms-group.com",
+    subject: "Overdue Safety Observations",
+    text: overdueList
+   }, (err) => {
+    if (err) console.log("EMAIL ERROR:", err);
+   });
 
   }
  );
 
 });
 
-app.listen(3000,()=>{
- console.log("Server running on http://localhost:3000");
+
+// ================= START SERVER =================
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+ console.log("Server running on port", PORT);
 });
