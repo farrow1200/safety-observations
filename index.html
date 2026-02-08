@@ -246,6 +246,12 @@ status:status
 });
 
 alert("Observation Submitted");
+document.getElementById("name").value="";
+document.getElementById("obs").value="";
+document.getElementById("fix").value="";
+document.getElementById("status").selectedIndex=0;
+document.getElementById("dept").selectedIndex=0;
+
 load();
 
 }
