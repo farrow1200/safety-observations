@@ -1,18 +1,26 @@
-{
-  "name": "safety-observations",
-  "version": "1.0.0",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {
-    "@sendgrid/mail": "^8.1.6",
-    "body-parser": "^1.20.2",
-    "dotenv": "^17.2.4",
-    "exceljs": "^4.4.0",
-    "express": "^4.18.2",
-    "node-cron": "^3.0.3",
-    "resend": "^6.9.1",
-    "sqlite3": "^5.1.6"
-  }
-}
+diff --git a/package.json b/package.json
+index 6202cf197b8a6d803ea7c96f16128eea2bade50a..fe92f6bf86a3b5045246928aaa63de1b53e3f49f 100644
+--- a/package.json
++++ b/package.json
+@@ -1,18 +1,20 @@
+ {
+   "name": "safety-observations",
+   "version": "1.0.0",
+   "main": "server.js",
+   "scripts": {
+-    "start": "node server.js"
++    "start": "node server.js",
++    "verify:server": "node --check server.js",
++    "start:render": "npm run verify:server && node server.js"
+   },
+   "dependencies": {
+     "@sendgrid/mail": "^8.1.6",
+     "body-parser": "^1.20.2",
+     "dotenv": "^17.2.4",
+     "exceljs": "^4.4.0",
+     "express": "^4.18.2",
+     "node-cron": "^3.0.3",
+     "resend": "^6.9.1",
+     "sqlite3": "^5.1.6"
+   }
+ }
