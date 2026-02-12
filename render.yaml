@@ -1,7 +1,20 @@
-services:
-  - type: web
-    name: safety-observations
-    env: node
-    buildCommand: npm install --build-from-source
-    startCommand: node server.js
-
+diff --git a/render.yaml b/render.yaml
+index 71a9fca4f54f6f9fb7d89c928e5ddde7c343345b..9bd756b9610579b11ebc168ab26e77667f548e08 100644
+--- a/render.yaml
++++ b/render.yaml
+@@ -1,7 +1,14 @@
+ services:
+   - type: web
+     name: safety-observations
+     env: node
+     buildCommand: npm install --build-from-source
+     startCommand: node server.js
+-
++    healthCheckPath: /health
++    envVars:
++      - key: JSONBIN_API_KEY
++        sync: false
++      - key: JSONBIN_BIN_ID
++        sync: false
++      - key: RESEND_API_KEY
++        sync: false

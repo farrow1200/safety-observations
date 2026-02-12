@@ -1,480 +1,128 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Safety Observations</title>
-
-
-<link rel="manifest" href="/manifest.json">
-
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<style>
-
-body{
-font-family:Arial;
-background:#f2f2f2;
-margin:0;
-}
-
-.header{
-background:white;
-text-align:center;
-padding:15px;
-border-bottom:3px solid #ccc;
-}
-
-.tabs{text-align:center;margin:10px;}
-
-button{
-padding:12px;
-margin:5px;
-border-radius:10px;
-border:none;
-font-weight:bold;
-cursor:pointer;
-color:white;
-}
-
-.btnBlue{background:#3498db;}
-.btnGreen{background:#2ecc71;}
-.btnOrange{background:#f39c12;}
-.btnRed{background:#e74c3c;}
-
-.form{
-display:flex;
-flex-direction:column;
-gap:10px;
-width:400px;
-padding:15px;
-}
-
-input,select,textarea{
-padding:10px;
-font-size:16px;
-border-radius:6px;
-border:1px solid #ccc;
-width:100%;
-}
-
-.statusBar{padding:10px;}
-
-.status{
-padding:12px;
-margin:5px;
-border-radius:10px;
-color:white;
-font-weight:bold;
-text-align:center;
-}
-
-.open{background:red;}
-.progress{background:gold;color:black;}
-.closed{background:green;}
-
-.card{
-background:white;
-margin:10px;
-padding:15px;
-border-radius:12px;
-box-shadow:0 3px 10px rgba(0,0,0,0.15);
-border-left:8px solid #3498db;
-}
-
-.overdue{
-border-left:8px solid #e74c3c !important;
-background:#ffe6e6;
-}
-
-.scoreCard{
-background:white;
-padding:12px;
-margin:10px;
-border-radius:12px;
-box-shadow:0 3px 8px rgba(0,0,0,0.15);
-border-left:8px solid #2ecc71;
-font-weight:bold;
-}
-
-.invalid{
-border:2px solid red !important;
-background:#ffe6e6;
-}
-
-</style>
-</head>
-
-<body>
-
-<div class="header">
-<img src="logo.jpg" style="max-height:120px;">
-<h2>Osceola AR</h2>
-</div>
-
-<div class="tabs">
-<button class="btnBlue" onclick="showTab('main')">Observations</button>
-<button class="btnOrange" onclick="showTab('charts')">Charts</button>
-<button class="btnGreen" onclick="showTab('closed')">Closed</button>
-<button class="btnBlue" onclick="window.location='/export'">Export Excel</button>
-<button class="btnGreen" id="installBtn" style="display:none;">Install Desktop App</button>
-</div>
-
-<div class="statusBar">
-<div style="padding:10px;text-align:center;">
-
-Start Date:
-<input type="date" id="startDate" style="width:160px;">
-
-End Date:
-<input type="date" id="endDate" style="width:160px;">
-
-<button class="btnOrange" onclick="load()">Search</button>
-
-<button class="btnBlue" onclick="clearDates()">Clear</button>
-
-</div>
-
-<div id="openCount" class="status open">Open:0</div>
-<div id="progCount" class="status progress">In Progress:0</div>
-<div id="closedCount" class="status closed">Closed:0</div>
-<div id="overdueCount" class="status open">Overdue:0</div>
-
-
-
-</div>
-
-<div id="mainTab">
-
-<div class="form">
-
-<input id="name" class="required" placeholder="Employee Name">
-
-<select id="dept">
-<option>Cold Mill 1</option>
-<option>Cold Mill 2</option>
-<option>RCM</option>
-<option>ESP</option>
-<option>CSP</option>
-<option>HVOF</option>
-</select>
-
-<select id="status">
-<option>Open</option>
-<option>In Progress</option>
-<option>Closed</option>
-</select>
-
-<textarea id="obs" class="required" placeholder="Observation"></textarea>
-<textarea id="fix" class="required" placeholder="Fix Action"></textarea>
-
-<button id="submitBtn" class="btnBlue" onclick="add()" disabled>
-Submit Observation
-</button>
-
-</div>
-
-<div id="list"></div>
-
-</div>
-
-<div id="chartsTab" style="display:none;text-align:center;">
-<h2>Monthly Chart</h2>
-<div id="scorecards" style="padding:15px;"></div>
-<canvas id="statusChart"></canvas>
-</div>
-
-<div id="closedTab" style="display:none;">
-<h2 style="text-align:center;">Closed Observations</h2>
-<div id="closedList"></div>
-</div>
-
-<div id="closeModal" style="display:none;position:fixed;top:20%;left:30%;width:40%;background:white;padding:20px;border-radius:10px;">
-<h3>Close Observation</h3>
-<textarea id="closeFix" placeholder="Fix Action"></textarea>
-<button class="btnRed" onclick="submitClose()">Submit Close</button>
-</div>
-
-<script>
-
-let chart;
-let closingID=null;
-let deferredPrompt;
-function validateForm(){
-
-const requiredFields = document.querySelectorAll(".required");
-let valid = true;
-
-requiredFields.forEach(field=>{
-
- if(!field.value.trim()){
-  field.classList.add("invalid");
-  valid=false;
- }else{
-  field.classList.remove("invalid");
+diff --git a/index.html b/index.html
+index 4a21d0b458746bf7fd028d1f22d6162d5f142667..99a56b1e0c964ae76c648ae6dbeffcd848a9d543 100644
+--- a/index.html
++++ b/index.html
+@@ -296,50 +296,61 @@ load();
+ 
+ 
+ 
+ function openCloseModal(id){
+ 
+ closingID=id;
+ document.getElementById("closeModal").style.display="block";
+ 
  }
-
-});
-
-document.getElementById("submitBtn").disabled = !valid;
-
-}
-
-
-window.addEventListener("beforeinstallprompt",(e)=>{
-
-e.preventDefault();
-deferredPrompt=e;
-document.getElementById("installBtn").style.display="inline-block";
-
-});
-
-document.getElementById("installBtn").addEventListener("click",async()=>{
-
-if(!deferredPrompt)return;
-
-deferredPrompt.prompt();
-await deferredPrompt.userChoice;
-deferredPrompt=null;
-
-});
-
-
-function showTab(tab){
-
-document.getElementById("mainTab").style.display="none";
-document.getElementById("chartsTab").style.display="none";
-document.getElementById("closedTab").style.display="none";
-
-if(tab==="main") document.getElementById("mainTab").style.display="block";
-if(tab==="charts") document.getElementById("chartsTab").style.display="block";
-if(tab==="closed") document.getElementById("closedTab").style.display="block";
-
-}
-
-async function add(){
-
-console.log("ADD CLICKED");
-
-validateForm();
-
-const name=document.getElementById("name").value.trim();
-const dept=document.getElementById("dept").value;
-const status=document.getElementById("status").value;
-const obs=document.getElementById("obs").value.trim();
-const fix=document.getElementById("fix").value.trim();
-
-if(!name || !obs){
- alert("Please fill out all required fields");
- console.log("BLOCKED BY VALIDATION");
- return;
-}
-
-console.log("SENDING TO SERVER");
-
-await fetch("/add",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-name:name,
-department:dept,
-description:obs,
-fix:fix,
-status:status
-})
-});
-
-alert("Observation Submitted");
-
-document.getElementById("name").value="";
-document.getElementById("obs").value="";
-document.getElementById("fix").value="";
-
-load();
-}
-
-
-
-
-
-function openCloseModal(id){
-
-closingID=id;
-document.getElementById("closeModal").style.display="block";
-
-}
-
-async function submitClose(){
-
-const fix=document.getElementById("closeFix").value;
-
-await fetch("/update/"+closingID,{
-method:"PUT",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({status:"Closed",fix})
-});
-
-document.getElementById("closeModal").style.display="none";
-load();
-
-}
-
-async function load(){
-
-const res=await fetch("/data");
-const data=await res.json();
-
-let open=0,prog=0,closed=0,overdue=0;
-let html="";
-let closedHtml="";
-let deptStats={};
-
-const start=document.getElementById("startDate").value;
-const end=document.getElementById("endDate").value;
-
-
-data.forEach(o=>{
-
-if(!deptStats[o.department]){
-deptStats[o.department]={total:0,closed:0,overdue:0};
-}
-
-deptStats[o.department].total++;
-
-if(o.status==="Closed"){
-deptStats[o.department].closed++;
-}
-
-if(o.status!=="Closed"){
-const today=new Date();
-const obsDate=new Date(o.date);
-const diffDays=(today-obsDate)/(1000*60*60*24);
-
-if(diffDays>7){
-deptStats[o.department].overdue++;
-}
-}
-
-
-let isOverdue=false;
-
-// DATE FILTER
-if(start || end){
-
-const obsDate=new Date(o.date);
-const startDate=start ? new Date(start) : null;
-const endDate=end ? new Date(end) : null;
-
-if(startDate && obsDate < startDate) return;
-if(endDate && obsDate > endDate) return;
-
-}
-
-// OVERDUE CHECK
-if(o.status!=="Closed"){
-
-const today=new Date();
-const obsDate=new Date(o.date);
-const diffDays=(today-obsDate)/(1000*60*60*24);
-
-if(diffDays>7){
-isOverdue=true;
-overdue++;
-}
-
-}
-
-// COUNTERS
-if(o.status==="Open")open++;
-if(o.status==="In Progress")prog++;
-if(o.status==="Closed")closed++;
-
-// CLOSED TAB
-if(o.status==="Closed"){
-
-closedHtml+="<div class='card'>";
-closedHtml+="<b>"+o.name+"</b> - "+o.department+"<br>";
-closedHtml+="<b>Observation:</b> "+o.description+"<br>";
-closedHtml+="<b>Fix:</b> "+o.fix+"<br>";
-closedHtml+="Status:"+o.status;
-closedHtml+="</div>";
-
-}else{
-
-html+="<div class='card "+(isOverdue?"overdue":"")+"'>";
-html+="<b>"+o.name+"</b> - "+o.department+"<br>";
-html+="<b>Observation:</b> "+o.description+"<br>";
-html+="<b>Fix:</b> "+o.fix+"<br>";
-html+="Status:"+o.status+"<br>";
-html+="<button class='btnOrange' onclick=\"openCloseModal('"+o.id+"')\">Close</button>";
-html+="</div>";
-
-}
-
-});
-
-
-document.getElementById("list").innerHTML=html;
-document.getElementById("closedList").innerHTML=closedHtml;
-let scoreHTML="";
-
-for(const dept in deptStats){
-
-const d=deptStats[dept];
-const score=d.total?Math.round((d.closed/d.total)*100):0;
-
-scoreHTML+=`
-<div class="scoreCard">
-${dept}<br>
-Score: ${score}%<br>
-Total: ${d.total} |
-Closed: ${d.closed} |
-Overdue: ${d.overdue}
-</div>
-`;
-
-}
-
-document.getElementById("scorecards").innerHTML=scoreHTML;
-
-
-document.getElementById("openCount").innerText="Open:"+open;
-document.getElementById("progCount").innerText="In Progress:"+prog;
-document.getElementById("closedCount").innerText="Closed:"+closed;
-if(document.getElementById("overdueCount")){
-document.getElementById("overdueCount").innerText="Overdue:"+overdue;
-}
-
-const ctx=document.getElementById("statusChart");
-
-if(chart)chart.destroy();
-
-chart=new Chart(ctx,{
-type:'bar',
-data:{labels:["Open","In Progress","Closed"],
-datasets:[{data:[open,prog,closed]}]}
-});
-
-}
-
-function clearDates(){
-
-document.getElementById("startDate").value="";
-document.getElementById("endDate").value="";
-document.querySelectorAll(".required").forEach(field=>{
- field.addEventListener("input",validateForm);
-});
-load();
-
-}
-
-document.querySelectorAll(".required").forEach(field=>{
- field.addEventListener("input",validateForm);
-});
-
-validateForm();
-load();
-
-</script>
-
-</body>
-</html>
+ 
+ async function submitClose(){
+ 
+ const fix=document.getElementById("closeFix").value;
+ 
+ await fetch("/update/"+closingID,{
+ method:"PUT",
+ headers:{"Content-Type":"application/json"},
+ body:JSON.stringify({status:"Closed",fix})
+ });
+ 
+ document.getElementById("closeModal").style.display="none";
+ load();
+ 
+ }
+ 
++function formatObservationDate(rawDate){
++
++if(!rawDate) return "N/A";
++
++const parsed=new Date(rawDate);
++if(Number.isNaN(parsed.getTime())) return String(rawDate);
++
++return parsed.toLocaleDateString();
++
++}
++
+ async function load(){
+ 
+ const res=await fetch("/data");
+ const data=await res.json();
+ 
+ let open=0,prog=0,closed=0,overdue=0;
+ let html="";
+ let closedHtml="";
+ let deptStats={};
+ 
+ const start=document.getElementById("startDate").value;
+ const end=document.getElementById("endDate").value;
+ 
+ 
+ data.forEach(o=>{
+ 
+ if(!deptStats[o.department]){
+ deptStats[o.department]={total:0,closed:0,overdue:0};
+ }
+ 
+ deptStats[o.department].total++;
+ 
+ if(o.status==="Closed"){
+ deptStats[o.department].closed++;
+ }
+@@ -373,59 +384,61 @@ if(endDate && obsDate > endDate) return;
+ if(o.status!=="Closed"){
+ 
+ const today=new Date();
+ const obsDate=new Date(o.date);
+ const diffDays=(today-obsDate)/(1000*60*60*24);
+ 
+ if(diffDays>7){
+ isOverdue=true;
+ overdue++;
+ }
+ 
+ }
+ 
+ // COUNTERS
+ if(o.status==="Open")open++;
+ if(o.status==="In Progress")prog++;
+ if(o.status==="Closed")closed++;
+ 
+ // CLOSED TAB
+ if(o.status==="Closed"){
+ 
+ closedHtml+="<div class='card'>";
+ closedHtml+="<b>"+o.name+"</b> - "+o.department+"<br>";
+ closedHtml+="<b>Observation:</b> "+o.description+"<br>";
+ closedHtml+="<b>Fix:</b> "+o.fix+"<br>";
++closedHtml+="<b>Date:</b> "+formatObservationDate(o.date)+"<br>";
+ closedHtml+="Status:"+o.status;
+ closedHtml+="</div>";
+ 
+ }else{
+ 
+ html+="<div class='card "+(isOverdue?"overdue":"")+"'>";
+ html+="<b>"+o.name+"</b> - "+o.department+"<br>";
+ html+="<b>Observation:</b> "+o.description+"<br>";
+ html+="<b>Fix:</b> "+o.fix+"<br>";
++html+="<b>Date:</b> "+formatObservationDate(o.date)+"<br>";
+ html+="Status:"+o.status+"<br>";
+ html+="<button class='btnOrange' onclick=\"openCloseModal('"+o.id+"')\">Close</button>";
+ html+="</div>";
+ 
+ }
+ 
+ });
+ 
+ 
+ document.getElementById("list").innerHTML=html;
+ document.getElementById("closedList").innerHTML=closedHtml;
+ let scoreHTML="";
+ 
+ for(const dept in deptStats){
+ 
+ const d=deptStats[dept];
+ const score=d.total?Math.round((d.closed/d.total)*100):0;
+ 
+ scoreHTML+=`
+ <div class="scoreCard">
+ ${dept}<br>
+ Score: ${score}%<br>
+ Total: ${d.total} |
+ Closed: ${d.closed} |
+ Overdue: ${d.overdue}
